@@ -1,7 +1,7 @@
 #SingleInstance force
 #Requires AutoHotkey >=2.0- <2.1
 
-xlPath := "https://intranet.sagecounseling.net/wordpress/wp-content/uploads/Teams_Codes_Spreadsheet.xlsx"
+xlPath := "replace"
 
 colFiles := ('"1-Credible_Scheduled_Group_id.txt","2-Group_Name.txt",'
              '"3-Group_Type.txt","4-Track_Number.txt","5-Gender.txt",'
