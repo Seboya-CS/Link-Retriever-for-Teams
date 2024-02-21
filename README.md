@@ -48,6 +48,8 @@ To-dos:
 
 Expand the lookup functionality
 
+Add reminder to update links once per day
+
 Add a GUI with settings options
 
 Replace the text files with a single CSV
