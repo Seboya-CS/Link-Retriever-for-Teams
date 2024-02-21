@@ -1,13 +1,13 @@
 #SingleInstance force
 #Requires AutoHotkey >=2.0- <2.1
 
-xlPath := "replace"
+xlPath := "https://intranet.sagecounseling.net/wordpress/wp-content/uploads/Teams_Codes_Spreadsheet.xlsx"
 
-colFiles := ('"1-Credible_Scheduled_Group_id.txt","2-Group_Name.txt",
-             "3-Group_Type.txt","4-Track_Number.txt","5-Gender.txt",
-             "6-Group_Day.txt","7-Start_Time.txt","8-Location.txt",
-             "9-Conference_Phone_Number.txt","10-Conference_id.txt",
-             "11-Meeting_Link.txt"')
+colFiles := ('"1-Credible_Scheduled_Group_id.txt","2-Group_Name.txt",'
+             '"3-Group_Type.txt","4-Track_Number.txt","5-Gender.txt",'
+             '"6-Group_Day.txt","7-Start_Time.txt","8-Location.txt",'
+             '"9-Conference_Phone_Number.txt","10-Conference_id.txt",'
+             '"11-Meeting_Link.txt"')
 
 xlSheet := "Sheet1"
 logPath := "Log.txt"
@@ -41,7 +41,7 @@ noArchiveBool := false
 notifyID := ""
 logFile := ""
 
-acol := StrSplit(colFiles, ",")													; convert list to array
+acol := StrSplit(StrReplace(colFiles, '"', ""),",")								; convert list to array, remove quotes
 
 InitializeLog()																	; ensure log exists and is writable
 
