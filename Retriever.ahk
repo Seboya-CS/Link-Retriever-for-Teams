@@ -1,15 +1,18 @@
 #SingleInstance force
 #Requires AutoHotkey >=2.0- <2.1
 
-xlPath := A_Args[1]																; path to Excel spreadsheet
-xlSheet := A_Args[2]															; worksheet name
-logPath := A_Args[3] 															; path to log file
-workingDir := CheckForSlash(A_Args[4])											; working directory
-startRow := A_Args[5]															; start row of Excel table
-startCol := A_Args[6]															; start col of Excel table
-colFiles := A_Args[7]															; paths to text files, comma-separated
-archiveDir := CheckForSlash(A_Args[8]) 											; path to archive directory
-
+; ====		Command line arguments		========================================
+											;							========; paths to files for each column, comma-
+colFiles := A_Args[1]						;++++++++					++++++++	; separated, can be relative paths
+xlPath := A_Args[2]							;--------					--------; path to Excel spreadsheet, absolute
+xlSheet := A_Args[3]						;++++++++					++++++++; worksheet name
+logPath := A_Args[4]						;--------					--------; path to log file, can be relative path
+workingDir := CheckForSlash(A_Args[5])		;++++++++					++++++++; working directory, absolute path
+startRow := A_Args[6]						;--------					--------; start row of Excel table
+startCol := A_Args[7]						;++++++++					++++++++; start column of Excel table
+archiveDir := CheckForSlash(A_Args[8])		;--------					--------; path to archive directory, input as ""
+											;							========	; to use the default directory
+; ==============================================================================
 
 ; +++++		Error codes		+++++++++++++++++++++++++++++++++++++++++++++++++++;
 ; 000 - Insufficient arguments												++;+
@@ -43,6 +46,8 @@ logFile := ""
 
 acol := StrSplit(colFiles, ",")													; convert list to array
 
+InitializeLog()																	; ensure log exists and is writable
+
 ; =============================================================================
 ; ============		Initialize log		=======================================
 ; =============================================================================
@@ -51,7 +56,7 @@ acol := StrSplit(colFiles, ",")													; convert list to array
 ; for input.
 
 InitializeLog() {
-	global noLogBool, logOpenBool, firstLogOpenBool, notifyID, logFile, 
+	global noLogBool, logOpenBool, firstLogOpenBool, notifyID, logFile 
 	global logPath, workingDir, startRow, startCol, colFiles, archiveDir, acol	
 	global xlPath, xlSheet, noArchiveBool
 	try {																	
@@ -82,13 +87,37 @@ InitializeLog() {
 			return 0
 		}
 	}
-    if firstLogOpenBool {
-        logFile.Write("Log initialization success: " FormatTime(A_Now, 			; write some information to log
-						"yyyy-MM-dd hh:mm:ss") "`r`n")
+	logLength := logFile.Length
+	logFile.Close
+	if (logLength > 25000) {													; check for oversize log
+		r := MsgBox('The log has reached its size limit. Select "Yes" to'		; prompt user for decision
+				' move the log to the archive. Select "No" to clear the'
+				' log. Select "Cancel" to end the script.', , "YNC")
+		if (r = "Yes") {
+			try {
+				archiveDir := CreateNewArchiveFolder()							; attempt to archive the log
+				FileMove(logPath, archiveDir)	
+			} catch Error as err {
+				if (MsgBox(ErrorCodes(004), , "YN") = "Yes") {
+					ExitApp
+				}
+			}
+			logFile := ""
+		} else if (r = "No") {													; overwrite the log
+			logFile := FileOpen(logPath, "w")
+			logFile.Write("")
+			logFile.Close
+		} else if (r = "Cancel") {												; end script
+			ExitApp
+		}
+	}
+	
+	if (firstLogOpenBool) {
+        WriteToLog("Log initialization success: " FormatTime(A_Now, 			; write some information to log
+						"yyyy-MM-dd hh:mm:ss"))
         firstLogOpenBool := false
-    }
-	logFile.close																; end function
-    return true
+    }		
+    return true																	; end
 }
 
 ; =============================================================================
@@ -108,12 +137,13 @@ InitializeLog() {
 ; 	 to using a CSV file. I'm going to switch this over to use a CSV in a 
 ;	 future update, since that is more efficient.
 
-!+s:: { 
-	global noLogBool, logOpenBool, firstLogOpenBool, notifyID, logFile, 
+!+s:: { 																		; Alt Shift S
+	global noLogBool, logOpenBool, firstLogOpenBool, notifyID, logFile
 	global logPath, workingDir, startRow, startCol, colFiles, archiveDir, acol	
 	global xlPath, xlSheet, noArchiveBool
 	
-	if (!MoveOrOverwriteFiles) {												; handle column text files if they
+	bool := MoveOrOverwriteFiles()
+	if (!bool) {																; handle column text files if they
 		WriteToLog("Error code 005. Writing over column files.")					; currently exist
 	}
 										   										; initialize Excel COM object
@@ -140,7 +170,7 @@ InitializeLog() {
             cellValue := ws.Cells(row, col).Value								; get cell value
 			
 			if (col = startCol && row != startRow) {
-				finalStr := CheckForTypos(cellValue)							; remove typos from group IDs
+				finalStr := CheckForTypos(cellValue, row)						; remove typos from group IDs
 			} else {
 				finalStr := cellValue
 			}
@@ -180,7 +210,7 @@ InitializeLog() {
 		MsgBox(notifyID)
 		notifyID := ""
 	}
-}																				; finished
+}																				; end
 
 return
 
@@ -192,8 +222,8 @@ return
 ; with the link. The procedure asks the user if they want to add the link to
 ; clipboard.
 
-!+L:: {
-	global noLogBool, logOpenBool, firstLogOpenBool, notifyID, logFile, 
+!+L:: {																			; Alt Shift L
+	global noLogBool, logOpenBool, firstLogOpenBool, notifyID, logFile
 	global logPath, workingDir, startRow, startCol, colFiles, archiveDir, acol	
 	global xlPath, xlSheet, noArchiveBool
 	groupNum := ""
@@ -202,8 +232,8 @@ return
 		c++																			; to type a valid integer
 		If (c < 3) {
 			response := InputBox("Input `"-1`" to exit script. Group ID:")		; I chose to use "-1" as the exit cue
-		} else {																	; in case someone accidentally hits
-			response := InputBox("Enter the group ID using only numbers."			; cancel, the script proceeds
+		} else {																	; so accidental cancels don't end
+			response := InputBox("Enter the group ID using only numbers."			; the script
 								" Non-numeric entries will be discarded.")
 		}
 		if (response.value = "-1") {
@@ -212,9 +242,9 @@ return
 		groupNum := response.value												; store into convenient variable
 	}
 	If (c >= 10 && IsNumber(groupNum) = false) {								; if the user failed to input a valid
-		MsgBox(ErrorCodes(006))														; integer, exit
+		MsgBox(ErrorCodes(006))														; integer, end procedure
 		WriteToLog("Error code 006. Failed to acquire valid group ID")
-		Exit
+		return 0
 	}
 
 	groups := FileRead(acol[1])													; read from group IDs file
@@ -224,10 +254,16 @@ return
 ; the match) a colon and the group number. also, that entire string must be a 
 ; single word (no white space).
 ; this results in a match with just the row number
-	pattern := "\b\d{1,3}(?=:" groupNum "\b)"									
+	pattern := "\b\d{1,3}(?=:" groupNum "\b)"
 	
 	groupsPos := RegExMatch(groups, pattern, &match)							; perform the ReGex
-	lineNum := match[0]															; match[0] is the actual matched string
+	try {
+		lineNum := match[0]														; match[0] is the actual matched string
+	} catch Error as err {														; this is in a try-catch to account for
+		MsgBox(ErrorCodes(007))														; invalid group IDs
+		WriteToLog("Error code 007. Failed to retrieve group ID: " groupNum)
+		return 0
+	}
 	
 ; this pattern has two parts. left part:
 ; [new line] followed by [the row number that contains the data we are
@@ -241,16 +277,16 @@ return
 	linksPos := RegExMatch(links, pattern, &match2)								; perform ReGex again
 	
 	try {
-		thelink := match2[0]													; this is in a try-catch to account for
-	} catch Error as err {															; invalid group IDs
+		thelink := match2[0]													
+	} catch Error as err {															
 		MsgBox(ErrorCodes(007))
-		WriteToLog("Error code 007. Failed to retrieve group ID: " lineNum)
+		WriteToLog("Error code 007. Failed to retrieve group ID: " groupNum)
 		return 0
 	}
 	if (MsgBox(match2[0] "`r`n`r`nCopy link to clipboard?", , "YN") = "Yes") {	; prompt user if they want to add
 		A_Clipboard := thelink														; the link to clipboard
 	}
-	return thelink
+	return thelink																; end
 }
 
 ; =============================================================================
@@ -260,15 +296,15 @@ return
 ; procedure prompts the user whether to overwrite them, or archive them.
 
 MoveOrOverwriteFiles() {
-	global noLogBool, logOpenBool, firstLogOpenBool, notifyID, logFile, 
+	global noLogBool, logOpenBool, firstLogOpenBool, notifyID, logFile
 	global logPath, workingDir, startRow, startCol, colFiles, archiveDir, acol	
 	global xlPath, xlSheet, noArchiveBool
-	fileExistsBool := false
+	fileExistsBool := false														; initialize vars
 	writeOverBool := false
 	fileLen := 0
 	num := 0
 
-	While (fileExistsBool = false && num <= 11) {								; loop through all of the column files
+	While (!fileExistsBool && num <= 11) {										; loop through all of the column files
 		num := A_Index
 		try {
 			fileText := FileRead(acol[num])
@@ -277,13 +313,14 @@ MoveOrOverwriteFiles() {
 		}																
 		If (fileLen >= 1) {														; if any files contain data, then they
 			fileExistsBool := true													; exist. I chose this approach
-		}																			; to account for empty files. No
-	}																				; need to archive empty files.
+		}																			; to account for empty files. no
+	}																				; need to archive empty files
+	
 	If (fileExistsBool) {
 		response := InputBox('Submit "1" to write over the current files.'		; I chose input box so it can default to
-					' Submit "2" to move the current files to the archive'			; move the files. Eventually I will
+					' Submit "2" to move the current files to the archive'			; move the files. eventually I will
 					' directory. Submit "0" to cancel and end the script.'			; replace this with a static
-					, , , "2")														; settings option.
+					, , , "2")														; settings option
 		If (response.value = "0") {
 			ExitApp
 		} else if (response.value = "2") {
@@ -309,7 +346,7 @@ MoveOrOverwriteFiles() {
 ; =============================================================================
 
 ; This procedure handles the notifications for any instances of typos in a 
-; group ID
+; group ID.
 UpdateNotifyMsg(uChar, uRow, uUnchangedID)
 {
 	global notifyID
@@ -339,7 +376,7 @@ CheckForSlash(path)
 ; This procedure attempts to create a new archive directory. If there is a
 ; problem, it prompts the user for direction.
 CreateNewArchiveFolder() {
-	global noLogBool, logOpenBool, firstLogOpenBool, notifyID, logFile, 
+	global noLogBool, logOpenBool, firstLogOpenBool, notifyID, logFile
 	global logPath, workingDir, startRow, startCol, colFiles, archiveDir, acol	
 	global xlPath, xlSheet, noArchiveBool
 	
@@ -349,7 +386,7 @@ CreateNewArchiveFolder() {
 	if (archiveDir = "\") {														; if the user did not pass a file path
 		newDirPath := workingDir . "Archive\" . newDirName							; for the archive directory as an 
 	} else {																		; argument, create one
-		newDirPath := archiveDirectory . "Archive\" . newDirName
+		newDirPath := archiveDir . "Archive\" . newDirName
 	}
 	try {
 		DirCreate newDirPath													; attempt to create the new directory
@@ -387,7 +424,7 @@ WriteToLog(str) {
 ; procedure UpdateNotifyMsg so it can be logged. When the "Get worksheet info"
 ; procedure concludes, a Message Box will display any alterations that were made
 ; to group IDs on the spreadsheet.
-CheckForTypos(str) {
+CheckForTypos(str, row) {
 	firstChar := SubStr(str, 1, 1)												; get first char of string
 	strL := StrLen(str)															; get string length
 	lastChar := SubStr(str, strL, 1)											; get last char of string
