@@ -201,10 +201,9 @@ InitializeLog() {
     xl := ""
 
 	If (notifyID != "") {														; handle notifications for typos in
-		logFile := FileOpen(logPath, "a")											; group IDs
-		logFile.Write(notifyID . "`n")
+		logFile := FileOpen(logPath, "a")											; group IDs. currently writes
+		logFile.Write(notifyID . "`n")                                              ; it to log
 		logFile.Close
-		MsgBox(notifyID)
 		notifyID := ""
 	}
 }																				; end
