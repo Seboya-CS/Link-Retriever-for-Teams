@@ -13,6 +13,7 @@ Allows the user to press a hotkey which will prompt the user for a group ID, and
 
 The user may choose to save the link to the clipboard.
 
+
 Instructions:
 
 Download AutoHotkey V2, if not already on the machine: https://www.autohotkey.com/.
@@ -29,9 +30,19 @@ When the script launches, it will set up the working environment either in the p
 
 There are two hotkeys used by the script. `Alt Shift S` directs the script to loop through the Excel file and copy each column into a text file. If the script encounters a problem, it will display a dialogue window and request the user's input. This only needs to be done once, to build the text files, but it can be done as often as the user needs in case the data changes.
 
+When updating text files that already exist, the script will prompt the user if the user would like to overwrite the text files, or move them to an archive directory. The default option is to archive the files. This will be replaced with a static settings option in a future update.
+
 `Alt Shift L` calls the lookup function, which prompts the user for a Group ID, then retriever the link associated with that group ID, and displays it in a dialogue window with a button to copy it to clipboard.
 
 The script will remain idle on the machine until it is closed by the user. It can be closed by right-clicking the icon in the system tray and selecting "Exit".
+
+
+Command-line arguments:
+
+If you want to make a batch file, the structure of the file is located in `/batch/`
+
+All strings should be encompassed by double quotes. A single space or tab should be between each argument. The first argument is a comma-separated list of relative of absolute paths to the text files that will be used by the script. The text files do not need to exist, the script will create them. Number values do not need to be quoted.
+
 
 To-dos:
 
@@ -54,5 +65,3 @@ Group day: day
 Group time: time
 
 Group link: link
-
-
