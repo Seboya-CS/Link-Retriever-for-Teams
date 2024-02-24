@@ -32,7 +32,7 @@ There are two hotkeys used by the script. `Alt Shift S` directs the script to lo
 
 When updating text files that already exist, the script will prompt the user if the user would like to overwrite the text files, or move them to an archive directory. The default option is to archive the files. This will be replaced with a static settings option in a future update.
 
-`Alt Shift L` calls the lookup function, which prompts the user for a Group ID, then retriever the link associated with that group ID, and displays it in a dialogue window with a button to copy it to clipboard.
+`Alt Shift L` calls the lookup function, which prompts the user for a Group ID, then retrieves the link associated with that group ID, and displays it in a dialogue window with a button to copy it to clipboard.
 
 The script will remain idle on the machine until it is closed by the user. It can be closed by right-clicking the icon in the system tray and selecting "Exit".
 
@@ -41,10 +41,12 @@ Command-line arguments:
 
 If you want to make a batch file, the structure of the file is located in `/batch/`
 
-All strings should be encompassed by double quotes. A single space or tab should be between each argument. The first argument is a comma-separated list of relative of absolute paths to the text files that will be used by the script. The text files do not need to exist, the script will create them. Number values do not need to be quoted.
+All strings should be encompassed by double quotes. A single space or tab should be between each argument. The first argument is a comma-separated list of relative paths (or absolute if storing them outside of workingDir) to the text files that will be used by the script. Do not include a slash at the beginning of a relative path. The text files do not need to exist, the script will create them. Number values do not need to be quoted.
 
 
 To-dos:
+
+Standardize user-input relative paths so it doesn't matter if it includes a leading slash or not.
 
 Expand the lookup functionality
 
