@@ -41,7 +41,7 @@ Command-line arguments:
 
 If you want to make a batch file, the structure of the file is located in `/batch/`
 
-All strings should be encompassed by double quotes. A single space or tab should be between each argument. The first argument is a comma-separated list of relative paths (or absolute if storing them outside of workingDir) to the text files that will be used by the script. Do not include a slash at the beginning of a relative path. The text files do not need to exist, the script will create them. Number values do not need to be quoted.
+All strings should be encompassed by double quotes. One or more spaces should separate each parameter. The first argument is a comma-separated list of relative paths (or absolute if storing them outside of workingDir) to the text files that will be used by the script. Do not include a slash at the beginning of a relative path. The text files do not need to exist, the script will create them. Number values do not need to be quoted.
 
 
 To-dos:
