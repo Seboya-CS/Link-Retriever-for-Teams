@@ -56,6 +56,8 @@ Add a GUI with settings options
 
 Replace the text files with a single CSV
 
+There's a hardcoded `11` value used in the script that needs to be replaced with a relative value.
+
 Remove/generalize the parts of the script that are specific to my use, generalize the functions, and separate the functions into individual AHKs.
 
 When the user retrieves a link, allow the option to have a persistent dialogue window that has the buttons "Copy to clipboard" "Copy and close" "Close". That way, if a link is needed frequently, the user does not need to keep on retrieving it.
